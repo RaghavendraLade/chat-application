@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<style type="text/css">
+	#chat{
+        width: 80%;
+        height: 500px;
+        overflow-y: auto;
+        margin: 20px auto;
+        background: rgba(174, 197, 143, 0.46);
+		padding: 5px;
+    }
+
+    #chat h4>span{
+    	border-radius:4px;
+    	background-color: rgba(0, 255, 40, 0.21);
+    	padding: 5px;
+    }
+    #chat h4.text-align-right>span{
+    	background-color: rgba(0, 221, 240, 0.32);
+    }
+
+    .text-align-right{
+        text-align: right;
+    }
+
+    #inputs{
+        width:35%;
+        margin: 0px auto;
+        text-align: center;
+    }
+    #inputs input[type='text'], #inputs textarea{
+        width: 100%;
+        margin-top:5px;
+        margin-bottom: 10px;
+    	border: 1px solid palevioletred;
+    	border-radius: 4px;
+    } 
+    #inputs input[type='text']{
+    	height: 20px;
+    }
+    #inputs textarea{
+    	height: 100px;
+    	padding-right: 0px;
+    	padding-left: 0px;
+    }
+
+</style>
+</head>
+<body ng-app='myApp'>
+<div ng-controller='myCtrl'>
+
+	<div id = 'chat'>
+		<h4 ng-repeat = 'mess in messages' ng-class = '(mess.user == user)? "text-align-right" : ""'>
+			<span>
+				<span ng-if = 'mess.user != user'>{{mess.user}} : </span>{{mess.message}}
+			</span>
+		</h4>
+	</div>	
+
+	<div id= 'inputs'>
+
+		<input type = 'text' ng-model = 'user' placeholder="UserName">
+
+		<textarea ng-model = 'message' placeholder="Enter Message"></textarea>
+
+		<button ng-click = 'fnSend()'>Send</button>
+
+		<span>{{error}}</span>
+		<span>{{success}}</span>
+
+	</div>
+</div>
+
+
+
+<script type="text/javascript" src='./node_modules/angular/angular.js'></script>
+<script type="text/javascript">
+	
+angular.module('myApp',[]).controller('myCtrl',['$scope', '$http', '$interval', '$timeout',function($scope, $http, $interval, $timeout){
+	var URL = "https://r-chat-box.herokuapp.com/";
+	//var URL = "http://localhost:3000/";
+	var vm = {};
+	$scope.user = '';
+	$scope.message = '';
+	
+	$scope.error = '';
+	$scope.success = '';
+	$scope.messages = [];
+	$interval(function(){
+		if($scope.user){
+			$http.get(URL+'allSMS').then(function(res){
+				$scope.messages = res.data;
+			})
+		}
+	}, 5000)
+	$http.get(URL+'allSMS').then(function(res){
+		console.log(res);
+	})
+
+	$scope.fnSend = function(){
+		$scope.error = '';
+
+		if(!$scope.user || $scope.user.includes(' ')){
+			$scope.error = 'Please fill UserName without spaces';
+		}else{
+			if($scope.message){
+
+				$http.get(URL+'message/'+$scope.message+'/user/'+$scope.user).then(function(res){
+						if(res.status == 200){
+							$scope.message = '';
+							$scope.success = 'Message Sent'
+							$timeout(function() {
+								$scope.success = '';
+							}, 3000);
+						}else{
+							$scope.success = 'Try Again'
+						}
+				})
+			}else{
+				$scope.error = 'Please Enter a message';	
+			}
+		}
+
+	}
+	
+}])
+
+</script>
+
+</body>
+</html>
